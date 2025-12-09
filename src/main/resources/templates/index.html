@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Home</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Hero Section -->
+    <div class="text-center py-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+            Manage Your Tasks Efficiently
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            TodoList helps you organize your work, collaborate with your team,
+            and never miss a deadline.
+        </p>
+        <div class="flex justify-center space-x-4">
+            <a th:href="@{/register}" class="btn btn-primary text-lg px-6 py-3">
+                Get Started Free
+            </a>
+            <a th:href="@{/login}" class="btn btn-secondary text-lg px-6 py-3">
+                Login
+            </a>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="grid md:grid-cols-3 gap-8 mt-16">
+        <div class="card text-center">
+            <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Task Management</h3>
+            <p class="text-gray-600">Create, organize, and track your tasks with priorities and due dates.</p>
+        </div>
+
+        <div class="card text-center">
+            <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Team Collaboration</h3>
+            <p class="text-gray-600">Work together with your team, assign tasks, and track progress.</p>
+        </div>
+
+        <div class="card text-center">
+            <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Smart Reminders</h3>
+            <p class="text-gray-600">Never miss a deadline with email and in-app notifications.</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

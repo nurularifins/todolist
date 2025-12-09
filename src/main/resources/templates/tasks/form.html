@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title th:text="${isEdit} ? 'Edit Task | TodoList' : 'New Task | TodoList'">Task Form | TodoList</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav class="mb-4">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a th:href="@{/tasks}" class="text-primary-600 hover:text-primary-800">Tasks</a></li>
+            <li><span class="text-gray-400">/</span></li>
+            <li class="text-gray-600" th:text="${isEdit} ? 'Edit' : 'New'">Action</li>
+        </ol>
+    </nav>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-lg shadow max-w-2xl">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-xl font-bold text-gray-900" th:text="${isEdit} ? 'Edit Task' : 'Create New Task'">Task Form</h1>
+        </div>
+
+        <form th:action="${isEdit} ? @{/tasks/{id}(id=${task.id})} : @{/tasks}"
+              method="post" th:object="${task}" class="p-6 space-y-6">
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <!-- Title -->
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+                    Title <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="title" th:field="*{title}"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                       th:classappend="${#fields.hasErrors('title')} ? 'border-red-500'"
+                       placeholder="Enter task title">
+                <p th:if="${#fields.hasErrors('title')}" class="mt-1 text-sm text-red-600" th:errors="*{title}">Error</p>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="description" th:field="*{description}" rows="4"
+                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="Enter task description (optional)"></textarea>
+            </div>
+
+            <!-- Status & Priority Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Status -->
+                <div th:if="${isEdit}">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="status" th:field="*{status}"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.displayName}">Status</option>
+                    </select>
+                </div>
+
+                <!-- Priority -->
+                <div th:classappend="${isEdit} ? '' : 'col-span-2'">
+                    <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select id="priority" th:field="*{priority}"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.displayName}">Priority</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Due Date -->
+            <div>
+                <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                <input type="datetime-local" id="dueDate" th:field="*{dueDate}"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <a th:href="${isEdit} ? @{/tasks/{id}(id=${task.id})} : @{/tasks}"
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    <span th:text="${isEdit} ? 'Update Task' : 'Create Task'">Submit</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+# ==================== Common Configuration ====================
+spring:
+  application:
+    name: TodoList App
+
+  # Thymeleaf
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+
+  # JPA
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Flyway
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # Mail (disabled by default, override in profile)
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# Server
+server:
+  port: 8080
+  error:
+    whitelabel:
+      enabled: false
+    include-message: always
+    include-binding-errors: always
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.nurularifins.todolist: DEBUG
+    org.springframework.security: INFO
+
+---
+# ==================== Development Profile ====================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # Database (Local MySQL)
+  datasource:
+    url: jdbc:mysql://localhost:3306/todolist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: Rahasia123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA - show SQL in dev
+  jpa:
+    show-sql: true
+
+  # Thymeleaf - no cache in dev
+  thymeleaf:
+    cache: false
+
+  # DevTools
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+---
+# ==================== Test Profile ====================
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  # Testcontainers will provide database connection
+  datasource:
+    url: jdbc:tc:mysql:8.0:///todolist_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+
+  jpa:
+    show-sql: false
+
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.nurularifins.todolist: INFO
+
+---
+# ==================== Production Profile ====================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  # Database from environment variables
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=true&serverTimezone=UTC
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # JPA - no SQL logging in prod
+  jpa:
+    show-sql: false
+
+  # Thymeleaf - enable cache in prod
+  thymeleaf:
+    cache: true
+
+  # Security
+  session:
+    cookie:
+      secure: true
+      http-only: true
+
+logging:
+  level:
+    root: WARN
+    com.nurularifins.todolist: INFO
