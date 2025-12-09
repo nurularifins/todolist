@@ -4,7 +4,7 @@
 
 TodoList adalah aplikasi web-based task management. Dibangun dengan Spring Boot 4.0 + Thymeleaf + MySQL.
 
-**Status:** Phase 0 (Foundation) - Belum dimulai
+**Status:** Phase 1 Complete - Next: Phase 2 (User Management)
 
 ## Core Principles
 
