@@ -20,7 +20,7 @@
 		<testcontainers.version>1.20.4</testcontainers.version>
 		<sonar.organization>nurularifins</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
-		<sonar.projectKey>nurularifins_todolist-app</sonar.projectKey>
+		<sonar.projectKey>nurularifins_todolist</sonar.projectKey>
 	</properties>
 
 	<dependencies>
