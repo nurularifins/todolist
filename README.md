@@ -2,22 +2,34 @@
 
 Web-based task management application built with Spring Boot 3.4 + Thymeleaf + MySQL.
 
-**Status:** Phase 1 - Basic Task Management (Complete)
+**Status:** Phase 2 - User Management (In Progress)
 
 ## Features (Current)
 
+### Core Task Management
 - Task CRUD (Create, Read, Update, Delete)
 - Task filtering by status and priority
 - Task search by title/description
 - Soft delete (archive) tasks
 - Mark tasks as complete
-- Responsive UI with Tailwind CSS
+
+### User Management
+- **Authentication**: Secure Registration & Login
+- **Profile Management**: Edit Full Name
+- **Security**: Change Password (with "Reveal" toggle)
+- **Dashboard**: Personal analytics and quick actions
+
+### UI/UX
+- **Modern Design**: "HealDocs / Premium Blue" theme
+- **Responsive Layout**: Glassmorphism Sidebar & Sticky Header
+- **Interactivity**: Alpine.js transformations & Toast Notifications
+- **Datepicker**: Integrated Flatpickr
 
 ## Screenshots
 
-| Task List | Task Detail | Create Task |
-|-----------|-------------|-------------|
-| Filter & search tasks | View task details | Create new task |
+| Dashboard | Task List | Task Detail |
+|-----------|-----------|-------------|
+| Analytics & Quick Access | Grid/List view with filters | Detailed view & actions |
 
 ## Quick Start
 
@@ -58,14 +70,14 @@ cp .env.example .env
 http://localhost:8080
 ```
 
-**Default credentials:** `user` / (check console for generated password)
+**Default credentials:** `user` / (check console for generated password) or Register a new account.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | Backend | Spring Boot 3.4.1, Java 21 |
-| Frontend | Thymeleaf, Tailwind CSS |
+| Frontend | Thymeleaf, Tailwind CSS, Alpine.js, Flatpickr |
 | Database | MySQL 8.0, Flyway migrations |
 | Security | Spring Security 6 (session-based) |
 | Testing | JUnit 5, Mockito, H2 (test) |
@@ -78,11 +90,11 @@ http://localhost:8080
 ```
 src/main/java/com/nurularifins/todolist/
 ├── config/          # Spring configuration (SecurityConfig)
-├── controller/      # MVC controllers (TaskController)
-├── service/         # Business logic (TaskService)
+├── controller/      # MVC controllers (TaskController, UserController)
+├── service/         # Business logic (TaskService, UserService)
 ├── repository/      # Spring Data JPA repositories
-├── entity/          # JPA entities (Task, Category)
-├── dto/             # Data Transfer Objects (TaskDto)
+├── entity/          # JPA entities (Task, User)
+├── dto/             # Data Transfer Objects (TaskDto, UserDto)
 ├── enums/           # TaskStatus, TaskPriority
 ├── exception/       # Custom exceptions & handlers
 └── TodolistApplication.java
@@ -91,11 +103,9 @@ src/main/resources/
 ├── templates/       # Thymeleaf templates
 │   ├── layout/      # Base layout (base.html)
 │   ├── tasks/       # Task views (list, detail, form)
-│   └── error/       # Error pages (404, 500)
-├── db/migration/    # Flyway SQL migrations
+│   ├── user/        # User views (profile, dashboard)
+│   └── auth/        # Auth views (login, register)
 └── application.yml  # Configuration
-
-src/test/java/       # Tests (48 tests passing)
 ```
 
 ## API Endpoints
@@ -103,53 +113,12 @@ src/test/java/       # Tests (48 tests passing)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/tasks` | List all tasks (with filtering) |
-| GET | `/tasks/{id}` | View task detail |
 | GET | `/tasks/new` | Create task form |
 | POST | `/tasks` | Create new task |
-| GET | `/tasks/{id}/edit` | Edit task form |
-| POST | `/tasks/{id}` | Update task |
-| POST | `/tasks/{id}/delete` | Soft delete task |
-| POST | `/tasks/{id}/complete` | Mark task complete |
-
-### Query Parameters (GET /tasks)
-
-| Param | Description | Example |
-|-------|-------------|---------|
-| `status` | Filter by status | `?status=TODO` |
-| `priority` | Filter by priority | `?priority=HIGH` |
-| `search` | Search title/description | `?search=meeting` |
-
-## Development
-
-### Run Tests
-
-```bash
-# All tests
-./mvnw test
-
-# With coverage report
-./mvnw clean verify
-open target/site/jacoco/index.html
-
-# Specific test class
-./mvnw test -Dtest=TaskServiceTest
-```
-
-### TDD Workflow
-
-1. **RED** - Write failing test
-2. **GREEN** - Minimum code to pass
-3. **REFACTOR** - Clean up
-4. **COMMIT**
-
-### Database Migrations
-
-```bash
-# Migrations are in src/main/resources/db/migration/
-# V001__init_schema.sql
-# V002__create_tasks_table.sql
-# V003__create_categories_table.sql
-```
+| GET | `/dashboard` | User Dashboard |
+| GET | `/profile` | User Profile Page |
+| GET | `/profile/edit` | Edit Profile Form |
+| POST | `/profile/change-password` | Change Password |
 
 ## Roadmap
 
@@ -157,7 +126,7 @@ open target/site/jacoco/index.html
 |-------|--------|-------------|
 | Phase 0 | ✅ Complete | Foundation - Project setup, DB, Security |
 | Phase 1 | ✅ Complete | Basic Task Management - CRUD, filtering |
-| Phase 2 | ⏳ Pending | User Management - Registration, login |
+| Phase 2 | 🏗 In Progress | User Management - Auth, Profile, Dashboard |
 | Phase 3 | ⏳ Pending | Collaboration - Teams, assignment |
 | Phase 4 | ⏳ Pending | Notifications - Email reminders |
 
@@ -169,43 +138,8 @@ open target/site/jacoco/index.html
 | [`docs/01-product-spec.md`](docs/01-product-spec.md) | Features & scope |
 | [`docs/02-architecture.md`](docs/02-architecture.md) | System architecture |
 | [`docs/03-implementation-plan.md`](docs/03-implementation-plan.md) | Implementation plan |
+| [`docs/04-ui-ux-design-system.md`](docs/04-ui-ux-design-system.md) | **NEW:** UI/UX Design System Guide |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records |
-
-## Environment Variables
-
-```bash
-# Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=todolist_db
-DB_USERNAME=root
-DB_PASSWORD=your_password
-
-# Email (Phase 4)
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
-```
-
-## Commands Reference
-
-```bash
-./mvnw spring-boot:run                    # Run app (default profile)
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev  # Run with dev profile
-./mvnw test                               # Run all tests
-./mvnw clean verify                       # Build + test + coverage
-docker-compose up -d                      # Start MySQL + phpMyAdmin
-docker-compose down                       # Stop containers
-docker-compose logs -f                    # View logs
-```
-
-## Contributing
-
-1. Follow TDD workflow
-2. Maintain test coverage > 70%
-3. Update documentation for new features
-4. Follow existing code conventions
 
 ## License
 
