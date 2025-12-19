@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "HealDocs" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - img [ref=e9]
+        - generic [ref=e11]: HealDocs
+      - generic [ref=e12]:
+        - link "Login" [ref=e13] [cursor=pointer]:
+          - /url: /login
+        - link "Register" [ref=e14] [cursor=pointer]:
+          - /url: /register
+  - main [ref=e15]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - img [ref=e20]
+        - heading "Get Started" [level=2] [ref=e22]
+        - paragraph [ref=e23]: Create your new account
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]: Full Name
+            - textbox "Full Name" [ref=e28]:
+              - /placeholder: John Doe
+              - text: testuser_1766110301671
+          - generic [ref=e29]:
+            - generic [ref=e30]: Email address
+            - textbox "Email address" [ref=e31]:
+              - /placeholder: you@example.com
+              - text: user_1766110301671@example.com
+          - generic [ref=e32]:
+            - generic [ref=e33]: Password
+            - textbox "Password" [active] [ref=e34]:
+              - /placeholder: Min 8 chars, A-Z, 0-9
+              - text: Password@123
+        - button "Create Account" [ref=e35] [cursor=pointer]
+      - paragraph [ref=e37]:
+        - text: Already have an account?
+        - link "Sign in here" [ref=e38] [cursor=pointer]:
+          - /url: /login
+```

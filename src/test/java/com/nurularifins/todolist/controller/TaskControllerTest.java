@@ -5,6 +5,10 @@ import com.nurularifins.todolist.enums.TaskPriority;
 import com.nurularifins.todolist.enums.TaskStatus;
 import com.nurularifins.todolist.exception.TaskNotFoundException;
 import com.nurularifins.todolist.service.TaskService;
+import com.nurularifins.todolist.entity.User;
+import com.nurularifins.todolist.repository.UserRepository;
+import java.util.Optional;
+import static org.mockito.ArgumentMatchers.eq;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,10 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.thymeleaf.spring6.view.ThymeleafViewResolver;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,7 +45,11 @@ class TaskControllerTest {
     @MockBean
     private TaskService taskService;
 
+    @MockBean
+    private UserRepository userRepository;
+
     private TaskDto sampleTask;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
@@ -55,6 +61,13 @@ class TaskControllerTest {
         sampleTask.setPriority(TaskPriority.MEDIUM);
         sampleTask.setCreatedAt(LocalDateTime.now());
         sampleTask.setUpdatedAt(LocalDateTime.now());
+
+        testUser = new User();
+        testUser.setId(UUID.randomUUID());
+        testUser.setEmail("user"); // Matches @WithMockUser default username "user"
+        testUser.setFullName("Test User");
+
+        when(userRepository.findByEmail("user")).thenReturn(Optional.of(testUser));
     }
 
     @Nested
@@ -66,7 +79,7 @@ class TaskControllerTest {
         @DisplayName("should display task list page")
         void shouldDisplayTaskListPage() throws Exception {
             // Given
-            when(taskService.getAllTasks()).thenReturn(List.of(sampleTask));
+            when(taskService.getAllTasks(any(User.class))).thenReturn(List.of(sampleTask));
 
             // When/Then
             mockMvc.perform(get("/tasks"))
@@ -80,14 +93,14 @@ class TaskControllerTest {
         @DisplayName("should filter tasks by status")
         void shouldFilterTasksByStatus() throws Exception {
             // Given
-            when(taskService.getTasksByStatus(TaskStatus.TODO)).thenReturn(List.of(sampleTask));
+            when(taskService.getTasksByStatus(eq(TaskStatus.TODO), any(User.class))).thenReturn(List.of(sampleTask));
 
             // When/Then
             mockMvc.perform(get("/tasks").param("status", "TODO"))
                     .andExpect(status().isOk())
                     .andExpect(view().name("tasks/list"));
 
-            verify(taskService).getTasksByStatus(TaskStatus.TODO);
+            verify(taskService).getTasksByStatus(eq(TaskStatus.TODO), any(User.class));
         }
 
         @Test
@@ -95,14 +108,14 @@ class TaskControllerTest {
         @DisplayName("should search tasks by keyword")
         void shouldSearchTasksByKeyword() throws Exception {
             // Given
-            when(taskService.searchTasks("test")).thenReturn(List.of(sampleTask));
+            when(taskService.searchTasks(eq("test"), any(User.class))).thenReturn(List.of(sampleTask));
 
             // When/Then
             mockMvc.perform(get("/tasks").param("search", "test"))
                     .andExpect(status().isOk())
                     .andExpect(view().name("tasks/list"));
 
-            verify(taskService).searchTasks("test");
+            verify(taskService).searchTasks(eq("test"), any(User.class));
         }
     }
 
@@ -116,7 +129,7 @@ class TaskControllerTest {
         void shouldDisplayTaskDetailPage() throws Exception {
             // Given
             UUID taskId = sampleTask.getId();
-            when(taskService.getTaskById(taskId)).thenReturn(sampleTask);
+            when(taskService.getTaskById(eq(taskId), any(User.class))).thenReturn(sampleTask);
 
             // When/Then
             mockMvc.perform(get("/tasks/{id}", taskId))
@@ -131,7 +144,7 @@ class TaskControllerTest {
         void shouldReturn404WhenTaskNotFound() throws Exception {
             // Given
             UUID nonExistentId = UUID.randomUUID();
-            when(taskService.getTaskById(nonExistentId))
+            when(taskService.getTaskById(eq(nonExistentId), any(User.class)))
                     .thenThrow(new TaskNotFoundException(nonExistentId));
 
             // When/Then
@@ -161,14 +174,14 @@ class TaskControllerTest {
         @DisplayName("should create task successfully")
         void shouldCreateTaskSuccessfully() throws Exception {
             // Given
-            when(taskService.createTask(any(TaskDto.class))).thenReturn(sampleTask);
+            when(taskService.createTask(any(TaskDto.class), any(User.class))).thenReturn(sampleTask);
 
             // When/Then
             mockMvc.perform(post("/tasks")
-                            .with(csrf())
-                            .param("title", "New Task")
-                            .param("description", "New Description")
-                            .param("priority", "MEDIUM"))
+                    .with(csrf())
+                    .param("title", "New Task")
+                    .param("description", "New Description")
+                    .param("priority", "MEDIUM"))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/tasks"))
                     .andExpect(flash().attributeExists("success"));
@@ -179,9 +192,9 @@ class TaskControllerTest {
         @DisplayName("should return validation error when title is empty")
         void shouldReturnValidationErrorWhenTitleEmpty() throws Exception {
             mockMvc.perform(post("/tasks")
-                            .with(csrf())
-                            .param("title", "")
-                            .param("description", "Description"))
+                    .with(csrf())
+                    .param("title", "")
+                    .param("description", "Description"))
                     .andExpect(status().isOk())
                     .andExpect(view().name("tasks/form"))
                     .andExpect(model().hasErrors());
@@ -191,8 +204,8 @@ class TaskControllerTest {
         @DisplayName("should require authentication for create")
         void shouldRequireAuthenticationForCreate() throws Exception {
             mockMvc.perform(post("/tasks")
-                            .with(csrf())
-                            .param("title", "New Task"))
+                    .with(csrf())
+                    .param("title", "New Task"))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -201,7 +214,7 @@ class TaskControllerTest {
         @DisplayName("should require CSRF token")
         void shouldRequireCSRFToken() throws Exception {
             mockMvc.perform(post("/tasks")
-                            .param("title", "New Task"))
+                    .param("title", "New Task"))
                     .andExpect(status().isForbidden());
         }
     }
@@ -216,7 +229,7 @@ class TaskControllerTest {
         void shouldDisplayEditTaskForm() throws Exception {
             // Given
             UUID taskId = sampleTask.getId();
-            when(taskService.getTaskById(taskId)).thenReturn(sampleTask);
+            when(taskService.getTaskById(eq(taskId), any(User.class))).thenReturn(sampleTask);
 
             // When/Then
             mockMvc.perform(get("/tasks/{id}/edit", taskId))
@@ -231,18 +244,36 @@ class TaskControllerTest {
         void shouldUpdateTaskSuccessfully() throws Exception {
             // Given
             UUID taskId = sampleTask.getId();
-            when(taskService.updateTask(any(UUID.class), any(TaskDto.class))).thenReturn(sampleTask);
+            when(taskService.updateTask(eq(taskId), any(TaskDto.class), any(User.class))).thenReturn(sampleTask);
 
             // When/Then
             mockMvc.perform(post("/tasks/{id}", taskId)
-                            .with(csrf())
-                            .param("title", "Updated Task")
-                            .param("description", "Updated Description")
-                            .param("status", "IN_PROGRESS")
-                            .param("priority", "HIGH"))
+                    .with(csrf())
+                    .param("title", "Updated Task")
+                    .param("description", "Updated Description")
+                    .param("status", "IN_PROGRESS")
+                    .param("priority", "HIGH"))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/tasks/" + taskId))
                     .andExpect(flash().attributeExists("success"));
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("should handle invalid task exception during update")
+        void shouldHandleInvalidTaskExceptionDuringUpdate() throws Exception {
+            // Given
+            UUID taskId = sampleTask.getId();
+            when(taskService.updateTask(eq(taskId), any(TaskDto.class), any(User.class)))
+                    .thenThrow(new com.nurularifins.todolist.exception.InvalidTaskException("Invalid date"));
+
+            // When/Then
+            mockMvc.perform(post("/tasks/{id}", taskId)
+                    .with(csrf())
+                    .param("title", "Invalid Task"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/tasks"))
+                    .andExpect(flash().attribute("error", "Invalid date"));
         }
     }
 
@@ -259,12 +290,12 @@ class TaskControllerTest {
 
             // When/Then
             mockMvc.perform(post("/tasks/{id}/delete", taskId)
-                            .with(csrf()))
+                    .with(csrf()))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/tasks"))
                     .andExpect(flash().attributeExists("success"));
 
-            verify(taskService).deleteTask(taskId);
+            verify(taskService).deleteTask(eq(taskId), any(User.class));
         }
     }
 
@@ -281,15 +312,15 @@ class TaskControllerTest {
             TaskDto completedTask = new TaskDto();
             completedTask.setId(taskId);
             completedTask.setStatus(TaskStatus.DONE);
-            when(taskService.markAsComplete(taskId)).thenReturn(completedTask);
+            when(taskService.markAsComplete(eq(taskId), any(User.class))).thenReturn(completedTask);
 
             // When/Then
             mockMvc.perform(post("/tasks/{id}/complete", taskId)
-                            .with(csrf()))
+                    .with(csrf()))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/tasks/" + taskId));
 
-            verify(taskService).markAsComplete(taskId);
+            verify(taskService).markAsComplete(eq(taskId), any(User.class));
         }
     }
 }

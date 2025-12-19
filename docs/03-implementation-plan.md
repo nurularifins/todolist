@@ -188,9 +188,9 @@ Coverage > 70% ✅ (69.7% overall, 88.6% critical paths)
 ```
 
 **Implementation:**
-- [ ] V004__create_users_table.sql
-- [ ] User entity (UUID, email, passwordHash, fullName, isVerified, tokens)
-- [ ] UserRepository
+- [x] V004__create_users_table.sql
+- [x] User entity (UUID, email, passwordHash, fullName, isVerified, tokens)
+- [x] UserRepository
 
 ### 2.2 User Service (TDD)
 
@@ -207,10 +207,10 @@ Coverage > 70% ✅ (69.7% overall, 88.6% critical paths)
 ```
 
 **Implementation:**
-- [ ] UserService (register, verify, reset)
-- [ ] UserDto
-- [ ] Password validation (8 chars, upper, lower, number, special)
-- [ ] Token generation
+- [x] UserService (register, verify, reset)
+- [x] UserDto
+- [x] Password validation (8 chars, upper, lower, number, special)
+- [x] Token generation
 
 ### 2.3 Security Configuration (TDD)
 
@@ -225,11 +225,12 @@ Coverage > 70% ✅ (69.7% overall, 88.6% critical paths)
 ```
 
 **Implementation:**
-- [ ] SecurityConfig
-- [ ] CustomUserDetailsService
-- [ ] BCryptPasswordEncoder (strength 10)
-- [ ] Session configuration
-- [ ] Remember-me
+- [x] SecurityConfig
+- [x] CustomUserDetailsService
+- [x] BCryptPasswordEncoder (strength 10)
+- [x] Session configuration
+- [x] Remember-me
+- [x] Integrate User with Task (ownership)
 
 ### 2.4 Auth Controllers (TDD)
 
@@ -244,8 +245,8 @@ Coverage > 70% ✅ (69.7% overall, 88.6% critical paths)
 ```
 
 **Implementation:**
-- [ ] AuthController (register, login, verify)
-- [ ] PasswordResetController
+- [x] AuthController (register, login, verify)
+- [x] PasswordResetController
 
 ### 2.5 Email Service (TDD)
 
@@ -254,20 +255,20 @@ Coverage > 70% ✅ (69.7% overall, 88.6% critical paths)
 // EmailServiceTest.java
 @Test void shouldSendVerificationEmail()
 @Test void shouldSendPasswordResetEmail()
-@Test void shouldRetryOnFailure()
+@Test void shouldRetryOnFailure() <!-- deferred -->
 ```
 
 **Implementation:**
-- [ ] EmailService (@Async)
-- [ ] Email templates (Thymeleaf)
+- [x] EmailService (@Async)
+- [x] Email templates (Thymeleaf)
 
 ### 2.6 Views
-- [ ] Registration form
-- [ ] Login form
+- [x] Registration form
+- [x] Login form
 - [ ] Email verification page
-- [ ] Password reset forms
-- [ ] User profile page
-- [ ] Dashboard with statistics
+- [x] Password reset forms
+- [x] User profile page
+- [x] Dashboard with statistics
 
 ### Acceptance Criteria - Phase 2
 ```
@@ -278,6 +279,64 @@ Password reset email < 1 minute
 Account lockout after 5 attempts
 All tests pass
 Coverage > 70%
+```
+
+---
+
+## Phase 2.5: UI Verification (Playwright)
+
+**Goal:** Automated E2E testing & Screenshots
+
+### 2.5.1 Environment Setup
+- [ ] Install Node.js dependencies (Playwright)
+- [ ] Configure Playwright (baseURL, browsers)
+- [ ] Create `e2e` directory
+
+### 2.5.2 Critical Flows (E2E)
+- [ ] **Authentication**: Register -> Login -> Dashboard -> Logout
+- [ ] **Tasks**: Create -> Edit -> Complete -> Delete
+- [ ] **Search & Filter**: Search task -> Filter by status
+- [ ] **Access Control**: Protected routes redirect to login
+
+### 2.5.3 Screenshots
+- [ ] Capture Dashboard
+- [ ] Capture Task List (Grid View)
+- [ ] Capture Profile Page
+- [ ] Capture Mobile View (Sidebar Toggle)
+
+### Acceptance Criteria - Phase 2.5
+```
+npm run e2e → All tests pass
+Screenshots generated in /screenshots folder
+```
+
+---
+
+## Phase 2.5: UI Verification (Playwright)
+
+**Goal:** Automated E2E testing & Screenshots
+
+### 2.5.1 Environment Setup
+- [ ] Install Node.js dependencies (Playwright)
+- [ ] Configure Playwright (baseURL, browsers)
+- [ ] Create `e2e` directory
+
+### 2.5.2 Critical Flows (E2E)
+- [ ] **Authentication**: Register -> Login -> Dashboard -> Logout
+- [ ] **Tasks**: Create -> Edit -> Complete -> Delete
+- [ ] **Search & Filter**: Search task -> Filter by status
+- [ ] **Access Control**: Protected routes redirect to login
+
+### 2.5.3 Screenshots
+- [ ] Capture Dashboard
+- [ ] Capture Task List (Grid View)
+- [ ] Capture Profile Page
+- [ ] Capture Mobile View (Sidebar Toggle)
+
+### Acceptance Criteria - Phase 2.5
+```
+npm run e2e → All tests pass
+Screenshots generated in /screenshots folder
 ```
 
 ---

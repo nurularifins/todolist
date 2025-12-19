@@ -3,87 +3,115 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-    <title th:text="${isEdit} ? 'Edit Task | TodoList' : 'New Task | TodoList'">Task Form | TodoList</title>
+    <title th:text="${isEdit} ? 'Edit Task | HealDocs' : 'New Task | HealDocs'">Task Form</title>
 </head>
 <body>
 <div layout:fragment="content">
     <!-- Breadcrumb -->
-    <nav class="mb-4">
-        <ol class="flex items-center space-x-2 text-sm">
-            <li><a th:href="@{/tasks}" class="text-primary-600 hover:text-primary-800">Tasks</a></li>
-            <li><span class="text-gray-400">/</span></li>
-            <li class="text-gray-600" th:text="${isEdit} ? 'Edit' : 'New'">Action</li>
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a th:href="@{/tasks}" class="text-blue-600 hover:text-blue-800 font-medium">Tasks</a></li>
+            <li>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </li>
+            <li class="text-gray-900 font-semibold" th:text="${isEdit} ? 'Edit' : 'New'">Action</li>
         </ol>
     </nav>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-lg shadow max-w-2xl">
-        <div class="p-6 border-b border-gray-200">
-            <h1 class="text-xl font-bold text-gray-900" th:text="${isEdit} ? 'Edit Task' : 'Create New Task'">Task Form</h1>
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 max-w-3xl overflow-hidden">
+        <div class="p-8 pb-0">
+            <h1 class="text-2xl font-bold text-gray-800" th:text="${isEdit} ? 'Edit Task' : 'Create New Task'">Task Form</h1>
+            <p class="mt-1 text-sm text-gray-500">Fill in the details below to organize your work.</p>
         </div>
 
         <form th:action="${isEdit} ? @{/tasks/{id}(id=${task.id})} : @{/tasks}"
-              method="post" th:object="${task}" class="p-6 space-y-6">
+              method="post" th:object="${task}" class="p-8 pt-0 space-y-6">
 
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" th:field="*{id}">
 
             <!-- Title -->
             <div>
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+                <label for="title" class="block text-sm font-semibold text-gray-700 mb-1">
                     Title <span class="text-red-500">*</span>
                 </label>
                 <input type="text" id="title" th:field="*{title}"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                       th:classappend="${#fields.hasErrors('title')} ? 'border-red-500'"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 text-sm"
+                       th:classappend="${#fields.hasErrors('title')} ? 'border-red-500 focus:ring-red-500'"
                        placeholder="Enter task title">
-                <p th:if="${#fields.hasErrors('title')}" class="mt-1 text-sm text-red-600" th:errors="*{title}">Error</p>
+                <p th:if="${#fields.hasErrors('title')}" class="mt-1 text-xs text-red-600" th:errors="*{title}">Error</p>
             </div>
 
             <!-- Description -->
             <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea id="description" th:field="*{description}" rows="4"
-                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                <label for="description" class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                <textarea id="description" th:field="*{description}" rows="3"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 resize-none text-sm"
                           placeholder="Enter task description (optional)"></textarea>
             </div>
 
             <!-- Status & Priority Row -->
-            <div class="grid grid-cols-2 gap-4">
-                <!-- Status -->
-                <div th:if="${isEdit}">
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select id="status" th:field="*{status}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.displayName}">Status</option>
-                    </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Priority -->
+                <div>
+                    <label for="priority" class="block text-sm font-semibold text-gray-700 mb-1">Priority</label>
+                    <div class="relative">
+                        <select id="priority" th:field="*{priority}"
+                                class="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer text-sm">
+                            <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.displayName}">Priority</option>
+                        </select>
+                        <!-- Custom Chevron -->
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Priority -->
-                <div th:classappend="${isEdit} ? '' : 'col-span-2'">
-                    <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                    <select id="priority" th:field="*{priority}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.displayName}">Priority</option>
-                    </select>
+                <!-- Status (Only Edit Mode) -->
+                <div th:if="${isEdit}">
+                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                    <div class="relative">
+                        <select id="status" th:field="*{status}"
+                                class="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 pr-8 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer text-sm">
+                            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.displayName}">Status</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Due Date -->
             <div>
-                <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input type="datetime-local" id="dueDate" th:field="*{dueDate}"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <label for="dueDate" class="block text-sm font-semibold text-gray-700 mb-1">Due Date</label>
+                <input type="text" id="dueDate" th:field="*{dueDate}"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-700 placeholder-gray-400 text-sm bg-white"
+                       th:classappend="${#fields.hasErrors('dueDate')} ? 'border-red-500 focus:ring-red-500'"
+                       placeholder="Select date and time...">
+                <p th:if="${#fields.hasErrors('dueDate')}" class="mt-1 text-xs text-red-600" th:errors="*{dueDate}">Error</p>
             </div>
 
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    flatpickr("#dueDate", {
+                        enableTime: true,
+                        dateFormat: "Y-m-d H:i",
+                        time_24hr: true,
+                    });
+                });
+            </script>
+
             <!-- Buttons -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
                 <a th:href="${isEdit} ? @{/tasks/{id}(id=${task.id})} : @{/tasks}"
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                   class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all">
                     Cancel
                 </a>
                 <button type="submit"
-                        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                    <span th:text="${isEdit} ? 'Update Task' : 'Create Task'">Submit</span>
+                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-md shadow-blue-200 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <span th:text="${isEdit} ? 'Save Changes' : 'Create Task'">Submit</span>
                 </button>
             </div>
         </form>

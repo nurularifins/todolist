@@ -1,11 +1,15 @@
 package com.nurularifins.todolist.controller;
 
 import com.nurularifins.todolist.dto.TaskDto;
+import com.nurularifins.todolist.entity.User;
 import com.nurularifins.todolist.enums.TaskPriority;
 import com.nurularifins.todolist.enums.TaskStatus;
+import com.nurularifins.todolist.exception.InvalidTaskException;
 import com.nurularifins.todolist.exception.TaskNotFoundException;
+import com.nurularifins.todolist.repository.UserRepository;
 import com.nurularifins.todolist.service.TaskService;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,9 +35,16 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
+    private final UserRepository userRepository;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, UserRepository userRepository) {
         this.taskService = taskService;
+        this.userRepository = userRepository;
+    }
+
+    private User getAuthenticatedUser(Principal principal) {
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     /**
@@ -44,18 +55,30 @@ public class TaskController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) String search,
-            Model model) {
+            Model model,
+            Principal principal) {
 
+        User user = getAuthenticatedUser(principal);
         List<TaskDto> tasks;
 
         if (search != null && !search.isBlank()) {
-            tasks = taskService.searchTasks(search);
+            tasks = taskService.searchTasks(search, user);
         } else if (status != null && !status.isBlank()) {
-            tasks = taskService.getTasksByStatus(TaskStatus.valueOf(status));
+            try {
+                // Support comma-separated statuses (e.g., "TODO,IN_PROGRESS")
+                List<TaskStatus> statusList = java.util.Arrays.stream(status.split(","))
+                        .map(String::trim)
+                        .map(TaskStatus::valueOf)
+                        .toList();
+                tasks = taskService.getTasksByStatuses(statusList, user);
+            } catch (IllegalArgumentException e) {
+                // Fallback or empty if status is invalid
+                tasks = List.of();
+            }
         } else if (priority != null && !priority.isBlank()) {
-            tasks = taskService.getTasksByPriority(TaskPriority.valueOf(priority));
+            tasks = taskService.getTasksByPriority(TaskPriority.valueOf(priority), user);
         } else {
-            tasks = taskService.getAllTasks();
+            tasks = taskService.getAllTasks(user);
         }
 
         model.addAttribute("tasks", tasks);
@@ -72,8 +95,9 @@ public class TaskController {
      * Display task detail page.
      */
     @GetMapping("/{id}")
-    public String viewTask(@PathVariable UUID id, Model model) {
-        TaskDto task = taskService.getTaskById(id);
+    public String viewTask(@PathVariable UUID id, Model model, Principal principal) {
+        User user = getAuthenticatedUser(principal);
+        TaskDto task = taskService.getTaskById(id, user);
         model.addAttribute("task", task);
         return "tasks/detail";
     }
@@ -98,7 +122,8 @@ public class TaskController {
             @Valid @ModelAttribute("task") TaskDto taskDto,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            Principal principal) {
 
         if (result.hasErrors()) {
             model.addAttribute("statuses", TaskStatus.values());
@@ -107,7 +132,8 @@ public class TaskController {
             return "tasks/form";
         }
 
-        taskService.createTask(taskDto);
+        User user = getAuthenticatedUser(principal);
+        taskService.createTask(taskDto, user);
         redirectAttributes.addFlashAttribute("success", "Task created successfully!");
         return "redirect:/tasks";
     }
@@ -116,8 +142,9 @@ public class TaskController {
      * Display edit task form.
      */
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable UUID id, Model model) {
-        TaskDto task = taskService.getTaskById(id);
+    public String showEditForm(@PathVariable UUID id, Model model, Principal principal) {
+        User user = getAuthenticatedUser(principal);
+        TaskDto task = taskService.getTaskById(id, user);
         model.addAttribute("task", task);
         model.addAttribute("statuses", TaskStatus.values());
         model.addAttribute("priorities", TaskPriority.values());
@@ -134,7 +161,11 @@ public class TaskController {
             @Valid @ModelAttribute("task") TaskDto taskDto,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            Principal principal) {
+
+        // Ensure ID is set for the view (in case of errors) and processing
+        taskDto.setId(id);
 
         if (result.hasErrors()) {
             model.addAttribute("statuses", TaskStatus.values());
@@ -143,7 +174,8 @@ public class TaskController {
             return "tasks/form";
         }
 
-        taskService.updateTask(id, taskDto);
+        User user = getAuthenticatedUser(principal);
+        taskService.updateTask(id, taskDto, user);
         redirectAttributes.addFlashAttribute("success", "Task updated successfully!");
         return "redirect:/tasks/" + id;
     }
@@ -152,8 +184,9 @@ public class TaskController {
      * Delete (archive) a task.
      */
     @PostMapping("/{id}/delete")
-    public String deleteTask(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
-        taskService.deleteTask(id);
+    public String deleteTask(@PathVariable UUID id, RedirectAttributes redirectAttributes, Principal principal) {
+        User user = getAuthenticatedUser(principal);
+        taskService.deleteTask(id, user);
         redirectAttributes.addFlashAttribute("success", "Task deleted successfully!");
         return "redirect:/tasks";
     }
@@ -162,8 +195,9 @@ public class TaskController {
      * Mark task as complete.
      */
     @PostMapping("/{id}/complete")
-    public String markAsComplete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
-        taskService.markAsComplete(id);
+    public String markAsComplete(@PathVariable UUID id, RedirectAttributes redirectAttributes, Principal principal) {
+        User user = getAuthenticatedUser(principal);
+        taskService.markAsComplete(id, user);
         redirectAttributes.addFlashAttribute("success", "Task marked as complete!");
         return "redirect:/tasks/" + id;
     }
@@ -176,5 +210,24 @@ public class TaskController {
     public String handleTaskNotFound(TaskNotFoundException ex, Model model) {
         model.addAttribute("error", ex.getMessage());
         return "error/404";
+    }
+
+    /**
+     * Handle invalid task exception.
+     */
+    @ExceptionHandler(InvalidTaskException.class)
+    public String handleInvalidTask(InvalidTaskException ex, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        return "redirect:/tasks";
+    }
+
+    /**
+     * Handle generic exceptions.
+     */
+    @ExceptionHandler(Exception.class)
+    public String handleGeneralError(Exception ex, RedirectAttributes redirectAttributes) {
+        // Log the error if logger was available, for now just expose message to user
+        redirectAttributes.addFlashAttribute("error", "An unexpected error occurred: " + ex.getMessage());
+        return "redirect:/tasks";
     }
 }

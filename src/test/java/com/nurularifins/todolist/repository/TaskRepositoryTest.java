@@ -1,6 +1,7 @@
 package com.nurularifins.todolist.repository;
 
 import com.nurularifins.todolist.entity.Task;
+import com.nurularifins.todolist.entity.User;
 import com.nurularifins.todolist.enums.TaskPriority;
 import com.nurularifins.todolist.enums.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,20 +28,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TaskRepositoryTest {
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private TaskRepository taskRepository;
 
     @Autowired
     private TestEntityManager entityManager;
 
     private Task sampleTask;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
+        taskRepository.deleteAll();
+        userRepository.deleteAll();
+
+        testUser = new User("test@example.com", "password", "Test User");
+        userRepository.save(testUser);
+
         sampleTask = new Task();
         sampleTask.setTitle("Sample Task");
         sampleTask.setDescription("Sample Description");
         sampleTask.setStatus(TaskStatus.TODO);
         sampleTask.setPriority(TaskPriority.MEDIUM);
+        sampleTask.setUser(testUser);
     }
 
     @Nested
@@ -121,6 +133,7 @@ class TaskRepositoryTest {
             inProgressTask.setTitle("In Progress Task");
             inProgressTask.setStatus(TaskStatus.IN_PROGRESS);
             inProgressTask.setPriority(TaskPriority.HIGH);
+            inProgressTask.setUser(testUser);
             taskRepository.save(inProgressTask);
 
             Task doneTask = new Task();
@@ -128,6 +141,7 @@ class TaskRepositoryTest {
             doneTask.setStatus(TaskStatus.DONE);
             doneTask.setPriority(TaskPriority.LOW);
             doneTask.setCompletedAt(LocalDateTime.now());
+            doneTask.setUser(testUser);
             taskRepository.save(doneTask);
 
             entityManager.flush();
@@ -154,6 +168,7 @@ class TaskRepositoryTest {
             urgentTask.setTitle("Urgent Task");
             urgentTask.setStatus(TaskStatus.TODO);
             urgentTask.setPriority(TaskPriority.URGENT);
+            urgentTask.setUser(testUser);
             taskRepository.save(urgentTask);
 
             entityManager.flush();
@@ -186,6 +201,7 @@ class TaskRepositoryTest {
             anotherTask.setDescription("Buy important items");
             anotherTask.setStatus(TaskStatus.TODO);
             anotherTask.setPriority(TaskPriority.LOW);
+            anotherTask.setUser(testUser);
             taskRepository.save(anotherTask);
 
             entityManager.flush();
@@ -216,6 +232,7 @@ class TaskRepositoryTest {
                 task.setTitle("Task " + i);
                 task.setStatus(TaskStatus.TODO);
                 task.setPriority(TaskPriority.MEDIUM);
+                task.setUser(testUser);
                 taskRepository.save(task);
             }
             entityManager.flush();
@@ -250,6 +267,7 @@ class TaskRepositoryTest {
             archivedTask.setStatus(TaskStatus.DONE);
             archivedTask.setPriority(TaskPriority.LOW);
             archivedTask.setArchived(true);
+            archivedTask.setUser(testUser);
             taskRepository.save(archivedTask);
 
             entityManager.flush();
@@ -279,6 +297,7 @@ class TaskRepositoryTest {
             overdue.setStatus(TaskStatus.TODO);
             overdue.setPriority(TaskPriority.HIGH);
             overdue.setDueDate(now.minusDays(1));
+            overdue.setUser(testUser);
             taskRepository.save(overdue);
 
             Task future = new Task();
@@ -286,6 +305,7 @@ class TaskRepositoryTest {
             future.setStatus(TaskStatus.TODO);
             future.setPriority(TaskPriority.LOW);
             future.setDueDate(now.plusDays(7));
+            future.setUser(testUser);
             taskRepository.save(future);
 
             entityManager.flush();

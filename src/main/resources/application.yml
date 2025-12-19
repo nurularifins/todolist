@@ -95,10 +95,12 @@ spring:
     activate:
       on-profile: test
 
-  # Testcontainers will provide database connection
+  # Local MySQL for testing
   datasource:
-    url: jdbc:tc:mysql:8.0:///todolist_test
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:mysql://localhost:3306/todolist_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: Rahasia123
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     show-sql: false

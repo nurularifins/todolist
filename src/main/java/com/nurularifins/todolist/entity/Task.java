@@ -6,12 +6,19 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -44,6 +51,7 @@ public class Task {
     private TaskPriority priority = TaskPriority.MEDIUM;
 
     @Column(name = "due_date")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime dueDate;
 
     @Column(name = "completed_at")
@@ -52,10 +60,16 @@ public class Task {
     @Column(name = "is_archived", nullable = false)
     private boolean archived = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @Column(name = "created_at", nullable = false, updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime updatedAt;
 
     public Task() {
@@ -139,6 +153,14 @@ public class Task {
         this.archived = archived;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -157,8 +179,10 @@ public class Task {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Task task = (Task) o;
         return Objects.equals(id, task.id);
     }

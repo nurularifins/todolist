@@ -11,17 +11,20 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Flatpickr (Material Blue Theme) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-    <!-- Custom Tailwind Config -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
                     colors: {
                         primary: {
                             50: '#eff6ff',
@@ -32,71 +35,58 @@
                             500: '#3b82f6',
                             600: '#2563eb',
                             700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
                         }
                     }
                 }
             }
         }
     </script>
-
-    <!-- Custom Styles -->
-    <style type="text/tailwindcss">
-        @layer components {
-            .btn {
-                @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
-            }
-            .btn-primary {
-                @apply bg-primary-600 text-white hover:bg-primary-700;
-            }
-            .btn-secondary {
-                @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
-            }
-            .btn-danger {
-                @apply bg-red-600 text-white hover:bg-red-700;
-            }
-            .input {
-                @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-            }
-            .label {
-                @apply block text-sm font-medium text-gray-700 mb-1;
-            }
-            .card {
-                @apply bg-white rounded-lg shadow-md p-6;
-            }
-        }
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
-
     <th:block layout:fragment="head"></th:block>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm" th:replace="~{layout/fragments :: navbar}"></nav>
+<body class="bg-gray-50 min-h-screen flex" x-data="{ sidebarOpen: false }">
 
-    <!-- Flash Messages -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div th:if="${successMessage}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-            <span th:text="${successMessage}"></span>
-        </div>
-        <div th:if="${errorMessage}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span th:text="${errorMessage}"></span>
-        </div>
+    <!-- Sidebar (Visible only when authenticated) -->
+    <div sec:authorize="isAuthenticated()">
+        <nav th:replace="~{layout/fragments :: sidebar}"></nav>
+
+        <!-- Mobile Overlay -->
+        <div x-show="sidebarOpen" @click="sidebarOpen = false"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 md:hidden" x-cloak></div>
     </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div layout:fragment="content"></div>
-    </main>
+    <!-- Main Content Wrapper -->
+    <div th:class="${#authorization.expression('isAuthenticated()') ? 'flex-1 md:ml-64 flex flex-col min-h-screen' : 'flex-1 flex flex-col min-h-screen'}">
 
-    <!-- Footer -->
-    <footer class="bg-white border-t mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <p class="text-center text-gray-500 text-sm">
-                &copy; 2024 TodoList App. Built with Spring Boot + Thymeleaf.
-            </p>
-        </div>
-    </footer>
+        <!-- Top Header (Authenticated) -->
+        <th:block sec:authorize="isAuthenticated()">
+            <header th:replace="~{layout/fragments :: top-header(title=${pageTitle ?: 'TodoList'})}"></header>
+        </th:block>
+
+        <!-- Public Navbar (Unauthenticated) -->
+        <th:block sec:authorize="!isAuthenticated()">
+             <nav th:replace="~{layout/fragments :: public-navbar}"></nav>
+        </th:block>
+
+        <!-- Common Content Area -->
+        <main class="flex-1 p-4 md:p-8">
+             <div layout:fragment="content"></div>
+             <!-- Public content fallback can be handled by the template itself if needed, or by layout:fragment="public-content" if distinct -->
+        </main>
+
+    </div>
+
+    <!-- Alpine.js (Moved to end for better loading) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <th:block layout:fragment="scripts"></th:block>
 </body>

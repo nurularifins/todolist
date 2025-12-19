@@ -2,6 +2,7 @@ package com.nurularifins.todolist.service;
 
 import com.nurularifins.todolist.dto.TaskDto;
 import com.nurularifins.todolist.entity.Task;
+import com.nurularifins.todolist.entity.User;
 import com.nurularifins.todolist.enums.TaskPriority;
 import com.nurularifins.todolist.enums.TaskStatus;
 import com.nurularifins.todolist.exception.InvalidTaskException;
@@ -31,10 +32,14 @@ public class TaskService {
     /**
      * Create a new task.
      */
-    public TaskDto createTask(TaskDto dto) {
+    /**
+     * Create a new task for a user.
+     */
+    public TaskDto createTask(TaskDto dto, User user) {
         validateTaskDto(dto);
 
         Task task = dto.toEntity();
+        task.setUser(user);
         Task saved = taskRepository.save(task);
         return TaskDto.fromEntity(saved);
     }
@@ -42,9 +47,11 @@ public class TaskService {
     /**
      * Update an existing task.
      */
-    public TaskDto updateTask(UUID id, TaskDto dto) {
+    public TaskDto updateTask(UUID id, TaskDto dto, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
+
+        validateTaskOwnership(task, user);
 
         if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
             task.setTitle(dto.getTitle());
@@ -72,9 +79,11 @@ public class TaskService {
     /**
      * Soft delete a task (archive it).
      */
-    public void deleteTask(UUID id) {
+    public void deleteTask(UUID id, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
+
+        validateTaskOwnership(task, user);
 
         task.setArchived(true);
         taskRepository.save(task);
@@ -83,9 +92,11 @@ public class TaskService {
     /**
      * Mark a task as complete.
      */
-    public TaskDto markAsComplete(UUID id) {
+    public TaskDto markAsComplete(UUID id, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
+
+        validateTaskOwnership(task, user);
 
         task.setStatus(TaskStatus.DONE);
         task.setCompletedAt(LocalDateTime.now());
@@ -94,54 +105,68 @@ public class TaskService {
     }
 
     /**
-     * Get all non-archived tasks.
+     * Get all non-archived tasks for a user.
      */
     @Transactional(readOnly = true)
-    public List<TaskDto> getAllTasks() {
-        return taskRepository.findByArchivedFalse()
+    public List<TaskDto> getAllTasks(User user) {
+        return taskRepository.findByUserAndArchivedFalse(user)
                 .stream()
                 .map(TaskDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get task by ID.
+     * Get task by ID and verify ownership.
      */
     @Transactional(readOnly = true)
-    public TaskDto getTaskById(UUID id) {
+    public TaskDto getTaskById(UUID id, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
+
+        validateTaskOwnership(task, user);
+
         return TaskDto.fromEntity(task);
     }
 
     /**
-     * Get tasks by status.
+     * Get tasks by status for a user.
      */
     @Transactional(readOnly = true)
-    public List<TaskDto> getTasksByStatus(TaskStatus status) {
-        return taskRepository.findByStatusAndArchivedFalse(status)
+    public List<TaskDto> getTasksByStatus(TaskStatus status, User user) {
+        return taskRepository.findByUserAndStatusAndArchivedFalse(user, status)
                 .stream()
                 .map(TaskDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get tasks by priority.
+     * Get tasks by a list of statuses for a user.
      */
     @Transactional(readOnly = true)
-    public List<TaskDto> getTasksByPriority(TaskPriority priority) {
-        return taskRepository.findByPriorityAndArchivedFalse(priority)
+    public List<TaskDto> getTasksByStatuses(List<TaskStatus> statuses, User user) {
+        return taskRepository.findByUserAndStatusInAndArchivedFalse(user, statuses)
                 .stream()
                 .map(TaskDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Search tasks by keyword in title or description.
+     * Get tasks by priority for a user.
      */
     @Transactional(readOnly = true)
-    public List<TaskDto> searchTasks(String keyword) {
-        return taskRepository.searchByTitleOrDescription(keyword)
+    public List<TaskDto> getTasksByPriority(TaskPriority priority, User user) {
+        return taskRepository.findByUserAndPriorityAndArchivedFalse(user, priority)
+                .stream()
+                .map(TaskDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Search tasks by keyword in title or description for a user.
+     */
+    @Transactional(readOnly = true)
+    public List<TaskDto> searchTasks(String keyword, User user) {
+        return taskRepository.searchTasksByUser(user, keyword)
                 .stream()
                 .map(TaskDto::fromEntity)
                 .collect(Collectors.toList());
@@ -157,6 +182,12 @@ public class TaskService {
 
         if (dto.getDueDate() != null && dto.getDueDate().isBefore(LocalDateTime.now())) {
             throw new InvalidTaskException("Task due date cannot be in the past");
+        }
+    }
+
+    private void validateTaskOwnership(Task task, User user) {
+        if (!task.getUser().getId().equals(user.getId())) {
+            throw new TaskNotFoundException(task.getId()); // Use 404 to avoid leaking existence
         }
     }
 }

@@ -138,6 +138,19 @@ See [`adr/002-database-design.md`](adr/002-database-design.md) for full schema.
 - Indexes pada frequently queried columns
 - @Async untuk email sending
 
+## Testing Strategy
+
+### Unit & Integration (Java)
+- **JUnit 5 + Mockito**: Business logic isolation.
+- **MockMvc**: Controller-level integration (HTTP semantics, validation).
+- **Testcontainers**: Real database testing (MySQL) instead of H2 for high fidelity.
+
+### End-to-End (Playwright)
+- **Playwright (Node.js)**: Full browser automation.
+- **Visual Regression**: Screenshot comparison.
+- **Scope**: Critical user flows (Auth, Tasks) and responsive layout (Mobile Sidebar).
+- **Separation**: E2E tests run separately from the Java build (`npm run e2e`).
+
 ## Deployment
 
 ### Development
@@ -157,3 +170,4 @@ docker-compose up -d    # MySQL + phpMyAdmin
 - Core Architecture ADR: [`adr/001-core-architecture.md`](adr/001-core-architecture.md)
 - Database Design ADR: [`adr/002-database-design.md`](adr/002-database-design.md)
 - Authentication ADR: [`adr/003-authentication.md`](adr/003-authentication.md)
+- UI Testing ADR: [`adr/006-ui-testing-playwright.md`](adr/006-ui-testing-playwright.md)

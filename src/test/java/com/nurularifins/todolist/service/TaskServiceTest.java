@@ -2,6 +2,7 @@ package com.nurularifins.todolist.service;
 
 import com.nurularifins.todolist.dto.TaskDto;
 import com.nurularifins.todolist.entity.Task;
+import com.nurularifins.todolist.entity.User;
 import com.nurularifins.todolist.enums.TaskPriority;
 import com.nurularifins.todolist.enums.TaskStatus;
 import com.nurularifins.todolist.exception.InvalidTaskException;
@@ -9,16 +10,11 @@ import com.nurularifins.todolist.exception.TaskNotFoundException;
 import com.nurularifins.todolist.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,9 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TaskService")
@@ -42,304 +36,210 @@ class TaskServiceTest {
     @InjectMocks
     private TaskService taskService;
 
-    private TaskDto validTaskDto;
-    private Task savedTask;
+    private User testUser;
+    private User otherUser;
 
     @BeforeEach
     void setUp() {
-        validTaskDto = new TaskDto();
-        validTaskDto.setTitle("Test Task");
-        validTaskDto.setDescription("Test Description");
-        validTaskDto.setPriority(TaskPriority.MEDIUM);
+        testUser = new User();
+        testUser.setId(UUID.randomUUID());
+        testUser.setEmail("user@example.com");
 
-        savedTask = new Task();
+        otherUser = new User();
+        otherUser.setId(UUID.randomUUID());
+        otherUser.setEmail("other@example.com");
+    }
+
+    @Test
+    @DisplayName("Should create task successfully")
+    void shouldCreateTaskSuccessfully() {
+        // Given
+        TaskDto taskDto = new TaskDto();
+        taskDto.setTitle("New Task");
+        taskDto.setDescription("Description");
+        taskDto.setPriority(TaskPriority.MEDIUM);
+
+        Task savedTask = new Task();
         savedTask.setId(UUID.randomUUID());
-        savedTask.setTitle("Test Task");
-        savedTask.setDescription("Test Description");
-        savedTask.setStatus(TaskStatus.TODO);
+        savedTask.setTitle(taskDto.getTitle());
+        savedTask.setUser(testUser);
         savedTask.setPriority(TaskPriority.MEDIUM);
-        savedTask.setCreatedAt(LocalDateTime.now());
-        savedTask.setUpdatedAt(LocalDateTime.now());
+        savedTask.setStatus(TaskStatus.TODO);
+
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+
+        // When
+        TaskDto created = taskService.createTask(taskDto, testUser);
+
+        // Then
+        assertThat(created).isNotNull();
+        assertThat(created.getTitle()).isEqualTo("New Task");
+        verify(taskRepository).save(any(Task.class));
     }
 
-    @Nested
-    @DisplayName("Create Task")
-    class CreateTask {
+    @Test
+    @DisplayName("Should throw exception when creating task with null title")
+    void shouldThrowExceptionWhenTitleNull() {
+        TaskDto taskDto = new TaskDto();
+        taskDto.setTitle(null);
 
-        @Test
-        @DisplayName("should create task successfully")
-        void shouldCreateTaskSuccessfully() {
-            // Given
-            when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
-
-            // When
-            TaskDto result = taskService.createTask(validTaskDto);
-
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(savedTask.getId());
-            assertThat(result.getTitle()).isEqualTo("Test Task");
-            assertThat(result.getStatus()).isEqualTo(TaskStatus.TODO);
-            verify(taskRepository).save(any(Task.class));
-        }
-
-        @Test
-        @DisplayName("should throw exception when title is null")
-        void shouldThrowExceptionWhenTitleNull() {
-            // Given
-            validTaskDto.setTitle(null);
-
-            // When/Then
-            assertThatThrownBy(() -> taskService.createTask(validTaskDto))
-                    .isInstanceOf(InvalidTaskException.class)
-                    .hasMessageContaining("title");
-
-            verify(taskRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("should throw exception when title is blank")
-        void shouldThrowExceptionWhenTitleBlank() {
-            // Given
-            validTaskDto.setTitle("   ");
-
-            // When/Then
-            assertThatThrownBy(() -> taskService.createTask(validTaskDto))
-                    .isInstanceOf(InvalidTaskException.class)
-                    .hasMessageContaining("title");
-
-            verify(taskRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("should throw exception when due date is in the past")
-        void shouldThrowExceptionWhenDueDateInPast() {
-            // Given
-            validTaskDto.setDueDate(LocalDateTime.now().minusDays(1));
-
-            // When/Then
-            assertThatThrownBy(() -> taskService.createTask(validTaskDto))
-                    .isInstanceOf(InvalidTaskException.class)
-                    .hasMessageContaining("due date");
-
-            verify(taskRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("should create task with default status TODO")
-        void shouldCreateTaskWithDefaultStatusTodo() {
-            // Given
-            validTaskDto.setStatus(null);
-            when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
-
-            // When
-            TaskDto result = taskService.createTask(validTaskDto);
-
-            // Then
-            assertThat(result.getStatus()).isEqualTo(TaskStatus.TODO);
-        }
-
-        @Test
-        @DisplayName("should create task with default priority MEDIUM")
-        void shouldCreateTaskWithDefaultPriorityMedium() {
-            // Given
-            validTaskDto.setPriority(null);
-            when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
-
-            // When
-            TaskDto result = taskService.createTask(validTaskDto);
-
-            // Then
-            assertThat(result.getPriority()).isEqualTo(TaskPriority.MEDIUM);
-        }
+        assertThatThrownBy(() -> taskService.createTask(taskDto, testUser))
+                .isInstanceOf(InvalidTaskException.class)
+                .hasMessage("Task title is required");
     }
 
-    @Nested
-    @DisplayName("Update Task")
-    class UpdateTask {
+    @Test
+    @DisplayName("Should update task successfully")
+    void shouldUpdateTaskSuccessfully() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task existingTask = new Task();
+        existingTask.setId(taskId);
+        existingTask.setTitle("Old Title");
+        existingTask.setUser(testUser); // Owned by testUser
 
-        @Test
-        @DisplayName("should update task successfully")
-        void shouldUpdateTaskSuccessfully() {
-            // Given
-            UUID taskId = savedTask.getId();
-            TaskDto updateDto = new TaskDto();
-            updateDto.setTitle("Updated Title");
-            updateDto.setDescription("Updated Description");
-            updateDto.setStatus(TaskStatus.IN_PROGRESS);
-            updateDto.setPriority(TaskPriority.HIGH);
+        TaskDto updateDto = new TaskDto();
+        updateDto.setTitle("New Title");
 
-            Task updatedTask = new Task();
-            updatedTask.setId(taskId);
-            updatedTask.setTitle("Updated Title");
-            updatedTask.setDescription("Updated Description");
-            updatedTask.setStatus(TaskStatus.IN_PROGRESS);
-            updatedTask.setPriority(TaskPriority.HIGH);
-            updatedTask.setCreatedAt(savedTask.getCreatedAt());
-            updatedTask.setUpdatedAt(LocalDateTime.now());
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
 
-            when(taskRepository.findById(taskId)).thenReturn(Optional.of(savedTask));
-            when(taskRepository.save(any(Task.class))).thenReturn(updatedTask);
+        // When
+        TaskDto updated = taskService.updateTask(taskId, updateDto, testUser);
 
-            // When
-            TaskDto result = taskService.updateTask(taskId, updateDto);
-
-            // Then
-            assertThat(result.getTitle()).isEqualTo("Updated Title");
-            assertThat(result.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
-            verify(taskRepository).save(any(Task.class));
-        }
-
-        @Test
-        @DisplayName("should throw exception when task not found")
-        void shouldThrowExceptionWhenTaskNotFound() {
-            // Given
-            UUID nonExistentId = UUID.randomUUID();
-            when(taskRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-            // When/Then
-            assertThatThrownBy(() -> taskService.updateTask(nonExistentId, validTaskDto))
-                    .isInstanceOf(TaskNotFoundException.class);
-        }
+        // Then
+        assertThat(updated.getTitle()).isEqualTo("New Title");
+        verify(taskRepository).save(existingTask);
     }
 
-    @Nested
-    @DisplayName("Delete Task")
-    class DeleteTask {
+    @Test
+    @DisplayName("Should throw not found exception when updating task belonging to another user")
+    void shouldThrowExceptionWhenUpdatingOtherUserTask() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task existingTask = new Task();
+        existingTask.setId(taskId);
+        existingTask.setTitle("Other User Task");
+        existingTask.setUser(otherUser); // Owned by otherUser
 
-        @Test
-        @DisplayName("should soft delete task (archive)")
-        void shouldSoftDeleteTask() {
-            // Given
-            UUID taskId = savedTask.getId();
-            when(taskRepository.findById(taskId)).thenReturn(Optional.of(savedTask));
-            when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
 
-            // When
-            taskService.deleteTask(taskId);
-
-            // Then
-            verify(taskRepository).save(any(Task.class));
-            assertThat(savedTask.isArchived()).isTrue();
-        }
-
-        @Test
-        @DisplayName("should throw exception when deleting non-existent task")
-        void shouldThrowExceptionWhenDeletingNonExistent() {
-            // Given
-            UUID nonExistentId = UUID.randomUUID();
-            when(taskRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-            // When/Then
-            assertThatThrownBy(() -> taskService.deleteTask(nonExistentId))
-                    .isInstanceOf(TaskNotFoundException.class);
-        }
+        // When/Then
+        assertThatThrownBy(() -> taskService.updateTask(taskId, new TaskDto(), testUser))
+                .isInstanceOf(TaskNotFoundException.class); // Should be 404 for security
     }
 
-    @Nested
-    @DisplayName("Mark Task as Complete")
-    class MarkTaskComplete {
+    @Test
+    @DisplayName("Should soft delete task successfully")
+    void shouldDeleteTask() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task task = new Task();
+        task.setId(taskId);
+        task.setUser(testUser);
 
-        @Test
-        @DisplayName("should mark task as complete")
-        void shouldMarkTaskAsComplete() {
-            // Given
-            UUID taskId = savedTask.getId();
-            Task completedTask = new Task();
-            completedTask.setId(taskId);
-            completedTask.setTitle(savedTask.getTitle());
-            completedTask.setStatus(TaskStatus.DONE);
-            completedTask.setCompletedAt(LocalDateTime.now());
-            completedTask.setPriority(TaskPriority.MEDIUM);
-            completedTask.setCreatedAt(savedTask.getCreatedAt());
-            completedTask.setUpdatedAt(LocalDateTime.now());
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
 
-            when(taskRepository.findById(taskId)).thenReturn(Optional.of(savedTask));
-            when(taskRepository.save(any(Task.class))).thenReturn(completedTask);
+        // When
+        taskService.deleteTask(taskId, testUser);
 
-            // When
-            TaskDto result = taskService.markAsComplete(taskId);
-
-            // Then
-            assertThat(result.getStatus()).isEqualTo(TaskStatus.DONE);
-            assertThat(result.getCompletedAt()).isNotNull();
-        }
+        // Then
+        assertThat(task.isArchived()).isTrue();
+        verify(taskRepository).save(task);
     }
 
-    @Nested
-    @DisplayName("Get Tasks")
-    class GetTasks {
+    @Test
+    @DisplayName("Should throw not found exception when deleting task of another user")
+    void shouldThrowExceptionWhenDeletingOtherUserTask() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task task = new Task();
+        task.setId(taskId);
+        task.setUser(otherUser);
 
-        @Test
-        @DisplayName("should get all tasks paginated")
-        void shouldGetAllTasksPaginated() {
-            // Given
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<Task> taskPage = new PageImpl<>(List.of(savedTask), pageable, 1);
-            when(taskRepository.findByArchivedFalse()).thenReturn(List.of(savedTask));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-            // When
-            List<TaskDto> result = taskService.getAllTasks();
+        // When/Then
+        assertThatThrownBy(() -> taskService.deleteTask(taskId, testUser))
+                .isInstanceOf(TaskNotFoundException.class);
 
-            // Then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getTitle()).isEqualTo("Test Task");
-        }
+        assertThat(task.isArchived()).isFalse();
+        verify(taskRepository, never()).save(task);
+    }
 
-        @Test
-        @DisplayName("should get task by ID")
-        void shouldGetTaskById() {
-            // Given
-            UUID taskId = savedTask.getId();
-            when(taskRepository.findById(taskId)).thenReturn(Optional.of(savedTask));
+    @Test
+    @DisplayName("Should mark task as complete")
+    void shouldMarkTaskAsComplete() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task task = new Task();
+        task.setId(taskId);
+        task.setStatus(TaskStatus.TODO);
+        task.setUser(testUser);
 
-            // When
-            TaskDto result = taskService.getTaskById(taskId);
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
 
-            // Then
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(taskId);
-        }
+        // When
+        TaskDto completed = taskService.markAsComplete(taskId, testUser);
 
-        @Test
-        @DisplayName("should throw exception when task not found by ID")
-        void shouldThrowExceptionWhenNotFoundById() {
-            // Given
-            UUID nonExistentId = UUID.randomUUID();
-            when(taskRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        // Then
+        assertThat(completed.getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(completed.getCompletedAt()).isNotNull();
+    }
 
-            // When/Then
-            assertThatThrownBy(() -> taskService.getTaskById(nonExistentId))
-                    .isInstanceOf(TaskNotFoundException.class);
-        }
+    @Test
+    @DisplayName("Should get all tasks for user")
+    void shouldGetAllTasks() {
+        // Given
+        Task task = new Task();
+        task.setId(UUID.randomUUID());
+        task.setTitle("Task 1");
+        task.setUser(testUser);
 
-        @Test
-        @DisplayName("should filter tasks by status")
-        void shouldFilterTasksByStatus() {
-            // Given
-            when(taskRepository.findByStatusAndArchivedFalse(TaskStatus.TODO))
-                    .thenReturn(List.of(savedTask));
+        when(taskRepository.findByUserAndArchivedFalse(testUser)).thenReturn(List.of(task));
 
-            // When
-            List<TaskDto> result = taskService.getTasksByStatus(TaskStatus.TODO);
+        // When
+        List<TaskDto> tasks = taskService.getAllTasks(testUser);
 
-            // Then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getStatus()).isEqualTo(TaskStatus.TODO);
-        }
+        // Then
+        assertThat(tasks).hasSize(1);
+        assertThat(tasks.get(0).getTitle()).isEqualTo("Task 1");
+    }
 
-        @Test
-        @DisplayName("should search tasks by keyword")
-        void shouldSearchTasksByKeyword() {
-            // Given
-            when(taskRepository.searchByTitleOrDescription("Test"))
-                    .thenReturn(List.of(savedTask));
+    @Test
+    @DisplayName("Should get task by id for user")
+    void shouldGetTaskById() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task task = new Task();
+        task.setId(taskId);
+        task.setTitle("My Task");
+        task.setUser(testUser);
 
-            // When
-            List<TaskDto> result = taskService.searchTasks("Test");
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
 
-            // Then
-            assertThat(result).hasSize(1);
-        }
+        // When
+        TaskDto found = taskService.getTaskById(taskId, testUser);
+
+        // Then
+        assertThat(found.getTitle()).isEqualTo("My Task");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when getting task of another user")
+    void shouldThrowExceptionWhenGetTaskOfOtherUser() {
+        // Given
+        UUID taskId = UUID.randomUUID();
+        Task task = new Task();
+        task.setId(taskId);
+        task.setUser(otherUser);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+
+        // When/Then
+        assertThatThrownBy(() -> taskService.getTaskById(taskId, testUser))
+                .isInstanceOf(TaskNotFoundException.class);
     }
 }

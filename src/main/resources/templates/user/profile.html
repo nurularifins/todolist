@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>My Profile | HealDocs</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a th:href="@{/dashboard}" class="text-blue-600 hover:text-blue-800 font-medium">Home</a></li>
+            <li>
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </li>
+            <li class="text-gray-900 font-semibold">My Profile</li>
+        </ol>
+    </nav>
+
+    <div class="max-w-4xl">
+        <!-- Profile Header -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+             <!-- Cover Banner -->
+             <div class="h-32 bg-gradient-to-r from-blue-500 to-blue-600 relative overflow-hidden">
+                <div class="absolute inset-0 bg-white/10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px; opacity: 0.2;"></div>
+             </div>
+
+             <div class="px-8 pb-8">
+             <div class="px-8 pb-8">
+                 <div class="relative -mt-12 mb-8 flex flex-col md:flex-row items-center md:items-end ">
+                     <img class="h-24 w-24 rounded-full ring-4 ring-white shadow-md bg-white object-cover relative z-10"
+                          th:src="@{'https://ui-avatars.com/api/?name=' + ${user.fullName} + '&background=random&size=128&bold=true'}"
+                          alt="Profile Picture">
+                     <div class="mt-4 md:mt-0 md:ml-6 md:mb-4 flex-1 text-center md:text-left relative z-10">
+                         <h1 class="text-2xl font-bold text-gray-800" th:text="${user.fullName}">User Name</h1>
+                         <p class="text-sm text-gray-500 font-medium" th:text="${user.email}">user@example.com</p>
+                     </div>
+                 </div>
+
+                 <!-- Account Info Grid -->
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <!-- Full Name -->
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Full Name</label>
+                         <div class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-800 text-sm font-medium flex justify-between items-center">
+                             <span th:text="${user.fullName}">Name</span>
+                             <a th:href="@{/profile/edit}" class="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase flex items-center gap-1">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                 </svg>
+                                 Edit
+                             </a>
+                         </div>
+                     </div>
+
+                     <!-- Email -->
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+                         <div class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-800 text-sm font-medium flex items-center justify-between">
+                             <span th:text="${user.email}">Email</span>
+                             <span th:if="${user.emailVerified}" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700">
+                                 <svg class="mr-1.5 h-2 w-2 text-green-500" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                                 Verified
+                             </span>
+                             <span th:unless="${user.emailVerified}" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-yellow-100 text-yellow-700">
+                                 <svg class="mr-1.5 h-2 w-2 text-yellow-500" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                                 Unverified
+                             </span>
+                         </div>
+                     </div>
+
+                     <!-- Joined Date -->
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Member Since</label>
+                         <div class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-800 text-sm font-medium flex items-center gap-2">
+                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                             <span th:text="${#temporals.format(user.createdAt, 'd MMMM yyyy, HH:mm')}">Date</span>
+                         </div>
+                     </div>
+
+                     <!-- Password Reset Action -->
+                     <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Security</label>
+                        <a th:href="@{/profile/change-password}" class="group inline-flex items-center justify-center w-full px-4 py-2.5 border border-red-200 text-sm font-medium rounded-lg text-red-600 bg-red-50 hover:bg-red-100 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            <svg class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Change Password
+                        </a>
+                     </div>
+                 </div>
+             </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

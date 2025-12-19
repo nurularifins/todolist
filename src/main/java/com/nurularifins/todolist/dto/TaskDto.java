@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 /**
  * Data Transfer Object for Task entity.
  */
@@ -29,6 +31,7 @@ public class TaskDto {
 
     private UUID categoryId;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime dueDate;
 
     private LocalDateTime completedAt;
