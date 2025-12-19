@@ -564,3 +564,4 @@ git commit -m "refactor: extract validation to TaskValidator"
 - Product Spec: [`01-product-spec.md`](01-product-spec.md)
 - Database Schema: [`adr/002-database-design.md`](adr/002-database-design.md)
 - TDD Details: [`adr/005-tdd-approach.md`](adr/005-tdd-approach.md)
+- UI/UX Design System: [`04-ui-ux-design-system.md`](04-ui-ux-design-system.md)
